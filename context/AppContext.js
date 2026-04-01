@@ -1,26 +1,31 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import {
-  onAuthStateChanged,
   createUserWithEmailAndPassword,
+  onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
   updateProfile,
-} from 'firebase/auth';
+} from "firebase/auth";
 import {
+  addDoc,
   collection,
   doc,
   getDoc,
   getDocs,
   onSnapshot,
   query,
+  serverTimestamp,
   setDoc,
   updateDoc,
   where,
-  addDoc,
-  serverTimestamp,
-  orderBy,
-} from 'firebase/firestore';
-import { auth, db } from '../services/firebaseConfig';
+} from "firebase/firestore";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { auth, db } from "../services/firebaseConfig";
 
 const AppContext = createContext(null);
 
@@ -59,13 +64,13 @@ export const AppProvider = ({ children }) => {
       }
 
       try {
-        const userRef = doc(db, 'users', user.uid);
+        const userRef = doc(db, "users", user.uid);
         const snap = await getDoc(userRef);
         if (!snap.exists()) {
           const profile = {
             uid: user.uid,
             email: user.email,
-            displayName: user.displayName || '',
+            displayName: user.displayName || "",
             homeId: null,
             createdAt: serverTimestamp(),
           };
@@ -75,14 +80,16 @@ export const AppProvider = ({ children }) => {
           setUserProfile({ id: snap.id, ...snap.data() });
         }
       } catch (e) {
-        console.log('Error loading user profile', e);
-        setError('Failed to load user profile. Check Firestore is enabled and rules allow read/write.');
+        console.log("Error loading user profile", e);
+        setError(
+          "Failed to load user profile. Check Firestore is enabled and rules allow read/write.",
+        );
         // Use auth user so app doesn't stay stuck on "Loading…"; they can still try Create Home
         setUserProfile({
           id: user.uid,
           uid: user.uid,
           email: user.email,
-          displayName: user.displayName || '',
+          displayName: user.displayName || "",
           homeId: null,
         });
       } finally {
@@ -104,7 +111,7 @@ export const AppProvider = ({ children }) => {
       return;
     }
 
-    const homeRef = doc(db, 'homes', userProfile.homeId);
+    const homeRef = doc(db, "homes", userProfile.homeId);
 
     let unsubHome = () => {};
     unsubHome = onSnapshot(
@@ -115,13 +122,13 @@ export const AppProvider = ({ children }) => {
         }
       },
       (e) => {
-        console.log('Home snapshot error', e);
+        console.log("Home snapshot error", e);
       },
     );
 
     const roommatesQuery = query(
-      collection(db, 'users'),
-      where('homeId', '==', userProfile.homeId),
+      collection(db, "users"),
+      where("homeId", "==", userProfile.homeId),
     );
     let unsubRoommates = () => {};
     unsubRoommates = onSnapshot(
@@ -132,14 +139,13 @@ export const AppProvider = ({ children }) => {
         setRoommates(items);
       },
       (e) => {
-        console.log('Roommates snapshot error', e);
+        console.log("Roommates snapshot error", e);
       },
     );
 
     const expensesQuery = query(
-      collection(db, 'expenses'),
-      where('homeId', '==', userProfile.homeId),
-      orderBy('createdAt', 'desc'),
+      collection(db, "expenses"),
+      where("homeId", "==", userProfile.homeId),
     );
     let unsubExpenses = () => {};
     unsubExpenses = onSnapshot(
@@ -147,16 +153,21 @@ export const AppProvider = ({ children }) => {
       (snap) => {
         const items = [];
         snap.forEach((d) => items.push({ id: d.id, ...d.data() }));
+        items.sort((a, b) => {
+          const aTs = a.createdAt?.seconds ? a.createdAt.seconds : 0;
+          const bTs = b.createdAt?.seconds ? b.createdAt.seconds : 0;
+          return bTs - aTs;
+        });
         setExpenses(items);
       },
       (e) => {
-        console.log('Expenses snapshot error', e);
+        console.log("Expenses snapshot error", e);
       },
     );
 
     const choresQuery = query(
-      collection(db, 'chores'),
-      where('homeId', '==', userProfile.homeId),
+      collection(db, "chores"),
+      where("homeId", "==", userProfile.homeId),
     );
     let unsubChores = () => {};
     unsubChores = onSnapshot(
@@ -167,15 +178,15 @@ export const AppProvider = ({ children }) => {
         setChores(items);
       },
       (e) => {
-        console.log('Chores snapshot error', e);
+        console.log("Chores snapshot error", e);
       },
     );
 
     // Invites stored in separate collection
     const invitesQuery = query(
-      collection(db, 'invites'),
-      where('homeId', '==', userProfile.homeId),
-      where('status', '==', 'pending'),
+      collection(db, "invites"),
+      where("homeId", "==", userProfile.homeId),
+      where("status", "==", "pending"),
     );
     let unsubInvites = () => {};
     unsubInvites = onSnapshot(
@@ -186,15 +197,14 @@ export const AppProvider = ({ children }) => {
         setRoommateInvites(items);
       },
       (e) => {
-        console.log('Invites snapshot error', e);
+        console.log("Invites snapshot error", e);
       },
     );
 
     // Activity feed
     const activityQuery = query(
-      collection(db, 'activity'),
-      where('homeId', '==', userProfile.homeId),
-      orderBy('createdAt', 'desc'),
+      collection(db, "activity"),
+      where("homeId", "==", userProfile.homeId),
     );
     let unsubActivity = () => {};
     unsubActivity = onSnapshot(
@@ -202,10 +212,15 @@ export const AppProvider = ({ children }) => {
       (snap) => {
         const items = [];
         snap.forEach((d) => items.push({ id: d.id, ...d.data() }));
+        items.sort((a, b) => {
+          const aTs = a.createdAt?.seconds ? a.createdAt.seconds : 0;
+          const bTs = b.createdAt?.seconds ? b.createdAt.seconds : 0;
+          return bTs - aTs;
+        });
         setActivity(items);
       },
       (e) => {
-        console.log('Activity snapshot error', e);
+        console.log("Activity snapshot error", e);
       },
     );
 
@@ -229,9 +244,9 @@ export const AppProvider = ({ children }) => {
     // We allow seeing invites even if user already has a home (e.g., invited to another home),
     // but JoinHome initial route only uses the first pending invite when there is no home.
     const invitesForUserQuery = query(
-      collection(db, 'invites'),
-      where('email', '==', firebaseUser.email),
-      where('status', '==', 'pending'),
+      collection(db, "invites"),
+      where("email", "==", firebaseUser.email),
+      where("status", "==", "pending"),
     );
 
     const unsub = onSnapshot(
@@ -243,7 +258,7 @@ export const AppProvider = ({ children }) => {
         setPendingInviteForUser(items[0] || null);
       },
       (e) => {
-        console.log('User invites snapshot error', e);
+        console.log("User invites snapshot error", e);
       },
     );
 
@@ -254,13 +269,20 @@ export const AppProvider = ({ children }) => {
     setLoadingAction(true);
     setError(null);
     try {
-      const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      const cred = await createUserWithEmailAndPassword(
+        auth,
+        email.trim(),
+        password,
+      );
       if (name) {
         await updateProfile(cred.user, { displayName: name });
       }
 
       const homesSnap = await getDocs(
-        query(collection(db, 'homes'), where('invitedEmails', 'array-contains', email.trim())),
+        query(
+          collection(db, "homes"),
+          where("invitedEmails", "array-contains", email.trim()),
+        ),
       );
       let homeIdToUse = null;
       homesSnap.forEach((d) => {
@@ -269,19 +291,19 @@ export const AppProvider = ({ children }) => {
         }
       });
 
-      const userRef = doc(db, 'users', cred.user.uid);
+      const userRef = doc(db, "users", cred.user.uid);
       const baseProfile = {
         uid: cred.user.uid,
         email: cred.user.email,
-        displayName: name || cred.user.displayName || '',
+        displayName: name || cred.user.displayName || "",
         homeId: homeIdToUse || null,
         createdAt: serverTimestamp(),
       };
       await setDoc(userRef, baseProfile, { merge: true });
       setUserProfile({ ...baseProfile, id: cred.user.uid });
     } catch (e) {
-      console.log('Signup error', e);
-      setError(e.message || 'Unable to sign up.');
+      console.log("Signup error", e);
+      setError(e.message || "Unable to sign up.");
       throw e;
     } finally {
       setLoadingAction(false);
@@ -294,8 +316,8 @@ export const AppProvider = ({ children }) => {
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
     } catch (e) {
-      console.log('Login error', e);
-      setError(e.message || 'Unable to log in.');
+      console.log("Login error", e);
+      setError(e.message || "Unable to log in.");
       throw e;
     } finally {
       setLoadingAction(false);
@@ -308,8 +330,8 @@ export const AppProvider = ({ children }) => {
     try {
       await signOut(auth);
     } catch (e) {
-      console.log('Logout error', e);
-      setError(e.message || 'Unable to log out.');
+      console.log("Logout error", e);
+      setError(e.message || "Unable to log out.");
     } finally {
       setLoadingAction(false);
     }
@@ -317,13 +339,13 @@ export const AppProvider = ({ children }) => {
 
   const createHome = async (homeName) => {
     if (!firebaseUser || !userProfile) {
-      setError('Please wait, loading your account…');
+      setError("Please wait, loading your account…");
       return;
     }
     setLoadingAction(true);
     setError(null);
     try {
-      const homesRef = collection(db, 'homes');
+      const homesRef = collection(db, "homes");
       const docRef = await addDoc(homesRef, {
         name: homeName,
         createdBy: firebaseUser.uid,
@@ -334,12 +356,12 @@ export const AppProvider = ({ children }) => {
 
       const homeId = docRef.id;
 
-      const userRef = doc(db, 'users', firebaseUser.uid);
+      const userRef = doc(db, "users", firebaseUser.uid);
       await updateDoc(userRef, { homeId });
       setUserProfile((prev) => (prev ? { ...prev, homeId } : prev));
     } catch (e) {
-      console.log('Create home error', e);
-      setError(e.message || 'Unable to create home.');
+      console.log("Create home error", e);
+      setError(e.message || "Unable to create home.");
       throw e;
     } finally {
       setLoadingAction(false);
@@ -351,7 +373,7 @@ export const AppProvider = ({ children }) => {
     setLoadingAction(true);
     setError(null);
     try {
-      const homeRef = doc(db, 'homes', home.id);
+      const homeRef = doc(db, "homes", home.id);
       const currentInvites = home.invitedEmails || [];
       if (!currentInvites.includes(email.trim())) {
         await updateDoc(homeRef, {
@@ -359,27 +381,27 @@ export const AppProvider = ({ children }) => {
         });
       }
 
-      const invitesRef = collection(db, 'invites');
+      const invitesRef = collection(db, "invites");
       await addDoc(invitesRef, {
         email: email.trim(),
         invitedBy: firebaseUser?.uid || null,
         homeId: home.id,
-        status: 'pending',
+        status: "pending",
         createdAt: serverTimestamp(),
       });
 
-      const activityRef = collection(db, 'activity');
+      const activityRef = collection(db, "activity");
       await addDoc(activityRef, {
-        type: 'roommate_invited',
+        type: "roommate_invited",
         homeId: home.id,
         userId: firebaseUser?.uid || null,
         title: `Invited ${email.trim()} to ${home.name}`,
-        byDisplayName: userProfile?.displayName || userProfile?.email || '',
+        byDisplayName: userProfile?.displayName || userProfile?.email || "",
         createdAt: serverTimestamp(),
       });
     } catch (e) {
-      console.log('Invite roommate error', e);
-      setError(e.message || 'Unable to invite roommate.');
+      console.log("Invite roommate error", e);
+      setError(e.message || "Unable to invite roommate.");
       throw e;
     } finally {
       setLoadingAction(false);
@@ -392,7 +414,7 @@ export const AppProvider = ({ children }) => {
     setLoadingAction(true);
     setError(null);
     try {
-      const homeRef = doc(db, 'homes', invite.homeId);
+      const homeRef = doc(db, "homes", invite.homeId);
       const homeSnap = await getDoc(homeRef);
       if (homeSnap.exists()) {
         const data = homeSnap.data();
@@ -402,19 +424,21 @@ export const AppProvider = ({ children }) => {
         }
       }
 
-      const userRef = doc(db, 'users', firebaseUser.uid);
+      const userRef = doc(db, "users", firebaseUser.uid);
       await updateDoc(userRef, { homeId: invite.homeId });
-      setUserProfile((prev) => (prev ? { ...prev, homeId: invite.homeId } : prev));
+      setUserProfile((prev) =>
+        prev ? { ...prev, homeId: invite.homeId } : prev,
+      );
 
-      const inviteRef = doc(db, 'invites', invite.id);
+      const inviteRef = doc(db, "invites", invite.id);
       await updateDoc(inviteRef, {
-        status: 'accepted',
+        status: "accepted",
         acceptedAt: serverTimestamp(),
       });
 
-      const activityRef = collection(db, 'activity');
+      const activityRef = collection(db, "activity");
       await addDoc(activityRef, {
-        type: 'roommate_joined',
+        type: "roommate_joined",
         homeId: invite.homeId,
         userId: firebaseUser.uid,
         title: `${firebaseUser.email} joined the home`,
@@ -424,15 +448,15 @@ export const AppProvider = ({ children }) => {
 
       setPendingInviteForUser(null);
     } catch (e) {
-      console.log('Accept invite error', e);
-      setError(e.message || 'Unable to accept invite.');
+      console.log("Accept invite error", e);
+      setError(e.message || "Unable to accept invite.");
       throw e;
     } finally {
       setLoadingAction(false);
     }
   };
 
-  const addExpense = async ({ title, amount, category = 'other', paidBy }) => {
+  const addExpense = async ({ title, amount, category = "other", paidBy }) => {
     if (!home || !firebaseUser) return;
     setError(null);
     try {
@@ -441,7 +465,7 @@ export const AppProvider = ({ children }) => {
         return;
       }
       const payerId = paidBy || firebaseUser.uid;
-      const expensesRef = collection(db, 'expenses');
+      const expensesRef = collection(db, "expenses");
       await addDoc(expensesRef, {
         title: title.trim(),
         amount: numericAmount,
@@ -452,18 +476,18 @@ export const AppProvider = ({ children }) => {
         createdAt: serverTimestamp(),
       });
 
-      const activityRef = collection(db, 'activity');
+      const activityRef = collection(db, "activity");
       await addDoc(activityRef, {
-        type: 'expense_added',
+        type: "expense_added",
         homeId: home.id,
         userId: firebaseUser.uid,
-        title: `Added ${title.trim()} • $${numericAmount.toFixed(2)}`,
-        byDisplayName: userProfile?.displayName || userProfile?.email || '',
+        title: `Added ${title.trim()} • ₹${numericAmount.toFixed(2)}`,
+        byDisplayName: userProfile?.displayName || userProfile?.email || "",
         createdAt: serverTimestamp(),
       });
     } catch (e) {
-      console.log('Add expense error', e);
-      setError(e.message || 'Unable to add expense.');
+      console.log("Add expense error", e);
+      setError(e.message || "Unable to add expense.");
       throw e;
     }
   };
@@ -475,28 +499,28 @@ export const AppProvider = ({ children }) => {
       if (!title || !assignedTo) {
         return;
       }
-      const choresRef = collection(db, 'chores');
+      const choresRef = collection(db, "chores");
       await addDoc(choresRef, {
         title: title.trim(),
         assignedTo,
-        status: 'pending',
+        status: "pending",
         dueDate: dueDate || null,
         homeId: home.id,
         createdAt: serverTimestamp(),
       });
 
-      const activityRef = collection(db, 'activity');
+      const activityRef = collection(db, "activity");
       await addDoc(activityRef, {
-        type: 'chore_added',
+        type: "chore_added",
         homeId: home.id,
         userId: firebaseUser?.uid || null,
         title: `Created chore: ${title.trim()}`,
-        byDisplayName: userProfile?.displayName || userProfile?.email || '',
+        byDisplayName: userProfile?.displayName || userProfile?.email || "",
         createdAt: serverTimestamp(),
       });
     } catch (e) {
-      console.log('Add chore error', e);
-      setError(e.message || 'Unable to add chore.');
+      console.log("Add chore error", e);
+      setError(e.message || "Unable to add chore.");
       throw e;
     }
   };
@@ -504,24 +528,24 @@ export const AppProvider = ({ children }) => {
   const completeChore = async (choreId, currentTitle) => {
     if (!home || !choreId) return;
     try {
-      const choreRef = doc(db, 'chores', choreId);
+      const choreRef = doc(db, "chores", choreId);
       await updateDoc(choreRef, {
-        status: 'completed',
+        status: "completed",
         completedAt: serverTimestamp(),
       });
 
-      const activityRef = collection(db, 'activity');
+      const activityRef = collection(db, "activity");
       await addDoc(activityRef, {
-        type: 'chore_completed',
+        type: "chore_completed",
         homeId: home.id,
         userId: firebaseUser?.uid || null,
         title: `Completed chore: ${currentTitle}`,
-        byDisplayName: userProfile?.displayName || userProfile?.email || '',
+        byDisplayName: userProfile?.displayName || userProfile?.email || "",
         createdAt: serverTimestamp(),
       });
     } catch (e) {
-      console.log('Complete chore error', e);
-      setError(e.message || 'Unable to complete chore.');
+      console.log("Complete chore error", e);
+      setError(e.message || "Unable to complete chore.");
     }
   };
 
@@ -531,14 +555,14 @@ export const AppProvider = ({ children }) => {
     setError(null);
     try {
       await updateProfile(firebaseUser, { displayName: newName.trim() });
-      const userRef = doc(db, 'users', firebaseUser.uid);
+      const userRef = doc(db, "users", firebaseUser.uid);
       await updateDoc(userRef, { displayName: newName.trim() });
       setUserProfile((prev) =>
         prev ? { ...prev, displayName: newName.trim() } : prev,
       );
     } catch (e) {
-      console.log('Update display name error', e);
-      setError(e.message || 'Unable to update name.');
+      console.log("Update display name error", e);
+      setError(e.message || "Unable to update name.");
     } finally {
       setLoadingAction(false);
     }
@@ -549,19 +573,21 @@ export const AppProvider = ({ children }) => {
     setLoadingAction(true);
     setError(null);
     try {
-      const homeRef = doc(db, 'homes', home.id);
+      const homeRef = doc(db, "homes", home.id);
       const snap = await getDoc(homeRef);
       if (snap.exists()) {
         const data = snap.data();
-        const members = (data.members || []).filter((id) => id !== firebaseUser.uid);
+        const members = (data.members || []).filter(
+          (id) => id !== firebaseUser.uid,
+        );
         await updateDoc(homeRef, { members });
       }
-      const userRef = doc(db, 'users', firebaseUser.uid);
+      const userRef = doc(db, "users", firebaseUser.uid);
       await updateDoc(userRef, { homeId: null });
       setUserProfile((prev) => (prev ? { ...prev, homeId: null } : prev));
     } catch (e) {
-      console.log('Leave home error', e);
-      setError(e.message || 'Unable to leave home.');
+      console.log("Leave home error", e);
+      setError(e.message || "Unable to leave home.");
     } finally {
       setLoadingAction(false);
     }
@@ -572,18 +598,18 @@ export const AppProvider = ({ children }) => {
     setLoadingAction(true);
     setError(null);
     try {
-      const homeRef = doc(db, 'homes', home.id);
+      const homeRef = doc(db, "homes", home.id);
       const snap = await getDoc(homeRef);
       if (snap.exists()) {
         const data = snap.data();
         const members = (data.members || []).filter((id) => id !== roommateId);
         await updateDoc(homeRef, { members });
       }
-      const userRef = doc(db, 'users', roommateId);
+      const userRef = doc(db, "users", roommateId);
       await updateDoc(userRef, { homeId: null });
     } catch (e) {
-      console.log('Remove roommate error', e);
-      setError(e.message || 'Unable to remove roommate.');
+      console.log("Remove roommate error", e);
+      setError(e.message || "Unable to remove roommate.");
     } finally {
       setLoadingAction(false);
     }
@@ -643,8 +669,7 @@ export const AppProvider = ({ children }) => {
 export const useAppContext = () => {
   const ctx = useContext(AppContext);
   if (!ctx) {
-    throw new Error('useAppContext must be used within an AppProvider');
+    throw new Error("useAppContext must be used within an AppProvider");
   }
   return ctx;
 };
-

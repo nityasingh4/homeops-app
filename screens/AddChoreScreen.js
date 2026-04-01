@@ -1,49 +1,33 @@
-import React, { useState } from 'react';
+import DateTimePicker from "@react-native-community/datetimepicker";
+import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  ScrollView,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAppContext } from '../context/AppContext';
-import RoommateCard from '../components/RoommateCard';
-
-let DateTimePicker;
-try {
-  // eslint-disable-next-line global-require
-  DateTimePicker = require('@react-native-community/datetimepicker').default;
-} catch (e) {
-  DateTimePicker = null;
-}
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import RoommateCard from "../components/RoommateCard";
+import { useAppContext } from "../context/AppContext";
 
 const AddChoreScreen = ({ navigation }) => {
   const { roommates, addChore, loadingAction } = useAppContext();
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState("");
   const [selectedRoommateId, setSelectedRoommateId] = useState(
     roommates.length > 0 ? roommates[0].id : null,
   );
   const [dueDate, setDueDate] = useState(null);
   const [showPicker, setShowPicker] = useState(false);
 
-  const handleSave = async () => {
-    if (!title || !selectedRoommateId) return;
-    try {
-      await addChore({ title, assignedTo: selectedRoommateId, dueDate });
-      navigation.goBack();
-    } catch {
-    }
-  };
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView
           contentContainerStyle={styles.container}
@@ -81,23 +65,16 @@ const AddChoreScreen = ({ navigation }) => {
                             ? dueDate.seconds * 1000
                             : dueDate,
                       ).toLocaleDateString()
-                    : 'Select a due date'}
+                    : "Select a due date"}
                 </Text>
               </TouchableOpacity>
-              {DateTimePicker == null && (
-                <Text style={styles.dateHelper}>
-                  For a native date picker, run
-                  {' '}
-                  expo install @react-native-community/datetimepicker
-                </Text>
-              )}
-              {showPicker && DateTimePicker && (
+              {showPicker && (
                 <DateTimePicker
                   mode="date"
                   value={dueDate || new Date()}
-                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  display={Platform.OS === "ios" ? "inline" : "calendar"}
                   onChange={(event, selectedDate) => {
-                    if (Platform.OS !== 'ios') {
+                    if (Platform.OS !== "ios") {
                       setShowPicker(false);
                     }
                     if (selectedDate) {
@@ -122,7 +99,8 @@ const AddChoreScreen = ({ navigation }) => {
                     activeOpacity={0.9}
                     style={[
                       styles.roommateWrapper,
-                      roommate.id === selectedRoommateId && styles.roommateWrapperSelected,
+                      roommate.id === selectedRoommateId &&
+                        styles.roommateWrapperSelected,
                     ]}
                   >
                     <RoommateCard
@@ -136,16 +114,32 @@ const AddChoreScreen = ({ navigation }) => {
             </View>
 
             <TouchableOpacity
-              style={[styles.primaryButton, loadingAction && styles.primaryButtonDisabled]}
-              onPress={handleSave}
+              style={[
+                styles.primaryButton,
+                loadingAction && styles.primaryButtonDisabled,
+              ]}
+              onPress={async () => {
+                if (!title || !selectedRoommateId) return;
+                try {
+                  await addChore({
+                    title,
+                    assignedTo: selectedRoommateId,
+                    dueDate,
+                  });
+                  navigation.goBack();
+                } catch {}
+              }}
               disabled={loadingAction}
             >
               <Text style={styles.primaryButtonText}>
-                {loadingAction ? 'Saving…' : 'Save chore'}
+                {loadingAction ? "Saving…" : "Save chore"}
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.goBack()}>
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => navigation.goBack()}
+            >
               <Text style={styles.secondaryButtonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
@@ -158,7 +152,7 @@ const AddChoreScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F6F7FB',
+    backgroundColor: "#F6F7FB",
   },
   flex: {
     flex: 1,
@@ -167,13 +161,13 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 24,
     paddingVertical: 24,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 24,
     padding: 24,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.08,
     shadowRadius: 24,
@@ -181,13 +175,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
-    fontWeight: '800',
-    color: '#111827',
+    fontWeight: "800",
+    color: "#111827",
   },
   subtitle: {
     marginTop: 4,
     fontSize: 14,
-    color: '#6B7280',
+    color: "#6B7280",
     marginBottom: 20,
   },
   inputGroup: {
@@ -195,36 +189,31 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 13,
-    fontWeight: '500',
-    color: '#4B5563',
+    fontWeight: "500",
+    color: "#4B5563",
     marginBottom: 6,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: "#E5E7EB",
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 15,
-    color: '#111827',
-    backgroundColor: '#F9FAFB',
+    color: "#111827",
+    backgroundColor: "#F9FAFB",
   },
   dateButton: {
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: "#E5E7EB",
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: "#F9FAFB",
   },
   dateButtonText: {
     fontSize: 15,
-    color: '#111827',
-  },
-  dateHelper: {
-    marginTop: 4,
-    fontSize: 11,
-    color: '#9CA3AF',
+    color: "#111827",
   },
   roommatesList: {
     marginBottom: 16,
@@ -235,38 +224,37 @@ const styles = StyleSheet.create({
   },
   roommateWrapperSelected: {
     borderWidth: 1,
-    borderColor: '#111827',
+    borderColor: "#111827",
   },
   emptyText: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: "#9CA3AF",
   },
   primaryButton: {
     marginTop: 12,
-    backgroundColor: '#111827',
+    backgroundColor: "#111827",
     borderRadius: 16,
     paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   primaryButtonDisabled: {
     opacity: 0.7,
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   secondaryButton: {
     marginTop: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   secondaryButtonText: {
     fontSize: 14,
-    color: '#6B7280',
-    fontWeight: '500',
+    color: "#6B7280",
+    fontWeight: "500",
   },
 });
 
 export default AddChoreScreen;
-

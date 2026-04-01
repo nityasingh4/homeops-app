@@ -1,43 +1,60 @@
-import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAppContext } from '../context/AppContext';
-import SummaryCard from '../components/SummaryCard';
-import QuickActionCard from '../components/QuickActionCard';
-import ActivityItem from '../components/ActivityItem';
-import { colors } from '../theme/colors';
+import React, { useMemo } from "react";
+import {
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import ActivityItem from "../components/ActivityItem";
+import QuickActionCard from "../components/QuickActionCard";
+import SummaryCard from "../components/SummaryCard";
+import { useAppContext } from "../context/AppContext";
+import { colors } from "../theme/colors";
 
 const DashboardScreen = ({ navigation }) => {
-  const { home, expenses, chores, roommates, activity, userInvites, acceptInvite } =
-    useAppContext();
+  const {
+    home,
+    expenses,
+    chores,
+    roommates,
+    activity,
+    userInvites,
+    acceptInvite,
+  } = useAppContext();
 
-  const { totalExpenses, pendingChores, recentExpenses, totalRoommates } = useMemo(() => {
-    const total = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-    const pending = chores.filter((c) => c.status === 'pending').length;
-    const recent = expenses.slice(0, 5);
-    const memberCount = Array.isArray(home?.members)
-      ? home.members.length
-      : roommates.length;
+  const { totalExpenses, pendingChores, recentExpenses, totalRoommates } =
+    useMemo(() => {
+      const total = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+      const pending = chores.filter((c) => c.status === "pending").length;
+      const recent = expenses.slice(0, 5);
+      const memberCount = Array.isArray(home?.members)
+        ? home.members.length
+        : roommates.length;
 
-    return {
-      totalExpenses: total,
-      pendingChores: pending,
-      recentExpenses: recent,
-      totalRoommates: memberCount || 0,
-    };
-  }, [expenses, chores, roommates, home]);
+      return {
+        totalExpenses: total,
+        pendingChores: pending,
+        recentExpenses: recent,
+        totalRoommates: memberCount || 0,
+      };
+    }, [expenses, chores, roommates, home]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
         <View style={styles.header}>
           <View>
             <Text style={styles.caption}>Welcome home</Text>
-            <Text style={styles.title}>{home?.name || 'Your home'}</Text>
+            <Text style={styles.title}>{home?.name || "Your home"}</Text>
           </View>
           <View style={styles.headerBadge}>
             <Text style={styles.headerBadgeText}>
-              {totalRoommates} roommate{totalRoommates === 1 ? '' : 's'}
+              {totalRoommates} roommate{totalRoommates === 1 ? "" : "s"}
             </Text>
           </View>
         </View>
@@ -47,7 +64,7 @@ const DashboardScreen = ({ navigation }) => {
             {roommates.slice(0, 5).map((r) => (
               <View key={r.id} style={styles.roommateAvatar}>
                 <Text style={styles.roommateAvatarText}>
-                  {(r.displayName || r.email || '?').slice(0, 1).toUpperCase()}
+                  {(r.displayName || r.email || "?").slice(0, 1).toUpperCase()}
                 </Text>
               </View>
             ))}
@@ -60,12 +77,8 @@ const DashboardScreen = ({ navigation }) => {
             {userInvites.map((inv) => (
               <View key={inv.id} style={styles.inviteRow}>
                 <View>
-                  <Text style={styles.expenseTitle}>
-                    Home invitation
-                  </Text>
-                  <Text style={styles.inviteMeta}>
-                    For {inv.email}
-                  </Text>
+                  <Text style={styles.expenseTitle}>Home invitation</Text>
+                  <Text style={styles.inviteMeta}>For {inv.email}</Text>
                 </View>
                 <TouchableOpacity
                   style={styles.inviteAcceptButton}
@@ -82,13 +95,13 @@ const DashboardScreen = ({ navigation }) => {
           <SummaryCard
             title="Shared expenses"
             subtitle="Total this month"
-            value={`$${totalExpenses.toFixed(2)}`}
+            value={`₹${totalExpenses.toFixed(2)}`}
           />
           <View style={{ width: 12 }} />
           <TouchableOpacity
             activeOpacity={0.9}
             style={styles.pressableCardWrapper}
-            onPress={() => navigation.navigate('Chores')}
+            onPress={() => navigation.navigate("Chores")}
           >
             <SummaryCard
               title="Pending chores"
@@ -103,36 +116,39 @@ const DashboardScreen = ({ navigation }) => {
           <QuickActionCard
             label="Add expense"
             icon="card-outline"
-            onPress={() => navigation.navigate('AddExpense')}
+            onPress={() => navigation.navigate("AddExpense")}
           />
           <QuickActionCard
             label="Add chore"
             icon="checkmark-done-outline"
-            onPress={() => navigation.navigate('AddChore')}
+            onPress={() => navigation.navigate("AddChore")}
           />
           <QuickActionCard
             label="Invite"
             icon="person-add-outline"
-            onPress={() => navigation.navigate('Account')}
+            onPress={() => navigation.navigate("Account")}
           />
         </View>
 
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Recent expenses</Text>
           {recentExpenses.length === 0 ? (
-            <Text style={styles.emptyText}>No expenses yet. Add your first expense.</Text>
+            <Text style={styles.emptyText}>
+              No expenses yet. Add your first expense.
+            </Text>
           ) : (
             recentExpenses.map((item) => {
               const payer =
                 roommates.find((r) => r.uid === item.paidBy) || null;
-              const payerLabel = payer?.displayName || payer?.email || 'Someone';
+              const payerLabel =
+                payer?.displayName || payer?.email || "Someone";
               const dateLabel = item.createdAt
                 ? new Date(
                     item.createdAt.seconds
                       ? item.createdAt.seconds * 1000
                       : item.createdAt,
                   ).toLocaleDateString()
-                : '';
+                : "";
 
               return (
                 <View key={item.id} style={styles.expenseRow}>
@@ -140,11 +156,11 @@ const DashboardScreen = ({ navigation }) => {
                     <Text style={styles.expenseTitle}>{item.title}</Text>
                     <Text style={styles.expenseMeta}>
                       {payerLabel}
-                      {dateLabel ? ` • ${dateLabel}` : ''}
+                      {dateLabel ? ` • ${dateLabel}` : ""}
                     </Text>
                   </View>
                   <Text style={styles.expenseAmount}>
-                    ${(item.amount || 0).toFixed(2)}
+                    ₹{(item.amount || 0).toFixed(2)}
                   </Text>
                 </View>
               );
@@ -155,15 +171,17 @@ const DashboardScreen = ({ navigation }) => {
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Recent activity</Text>
           {activity && activity.length > 0 ? (
-            activity.slice(0, 10).map((item) => (
-              <ActivityItem
-                key={item.id}
-                type={item.type}
-                title={item.title}
-                timestamp={item.createdAt}
-                by={item.byDisplayName || ''}
-              />
-            ))
+            activity
+              .slice(0, 10)
+              .map((item) => (
+                <ActivityItem
+                  key={item.id}
+                  type={item.type}
+                  title={item.title}
+                  timestamp={item.createdAt}
+                  by={item.byDisplayName || ""}
+                />
+              ))
           ) : (
             <Text style={styles.emptyText}>No activity yet.</Text>
           )}
@@ -187,9 +205,9 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 18,
   },
   caption: {
@@ -198,7 +216,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: '800',
+    fontWeight: "800",
     color: colors.textPrimary,
   },
   headerBadge: {
@@ -210,10 +228,10 @@ const styles = StyleSheet.create({
   headerBadgeText: {
     fontSize: 12,
     color: colors.primaryDark,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   roommatesRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 12,
   },
   roommateAvatar: {
@@ -221,24 +239,24 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: 14,
     backgroundColor: colors.surfaceSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 6,
   },
   roommateAvatarText: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: "700",
     color: colors.primaryDark,
   },
   summaryRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 16,
   },
   pressableCardWrapper: {
     flex: 1,
   },
   quickActionsRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 18,
   },
   sectionCard: {
@@ -247,7 +265,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     paddingVertical: 16,
     paddingHorizontal: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.04,
     shadowRadius: 10,
@@ -256,14 +274,14 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     color: colors.textPrimary,
     marginBottom: 8,
   },
   expenseRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 6,
   },
   expenseTitle: {
@@ -277,7 +295,7 @@ const styles = StyleSheet.create({
   },
   expenseAmount: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.textPrimary,
   },
   emptyText: {
@@ -285,9 +303,9 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   inviteRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 6,
   },
   inviteMeta: {
@@ -303,10 +321,9 @@ const styles = StyleSheet.create({
   },
   inviteAcceptText: {
     fontSize: 12,
-    color: '#FFFFFF',
-    fontWeight: '600',
+    color: "#FFFFFF",
+    fontWeight: "600",
   },
 });
 
 export default DashboardScreen;
-

@@ -1,19 +1,18 @@
-import React, { useMemo, useState } from 'react';
+import { Ionicons } from "@expo/vector-icons";
+import React, { useMemo, useState } from "react";
 import {
-  SafeAreaView,
-} from 'react-native-safe-area-context';
-import {
-  View,
-  Text,
-  StyleSheet,
   FlatList,
+  ScrollView,
+  StyleSheet,
+  Text,
   TextInput,
   TouchableOpacity,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useAppContext } from '../context/AppContext';
-import RoommateCard from '../components/RoommateCard';
-import { colors } from '../theme/colors';
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import RoommateCard from "../components/RoommateCard";
+import { useAppContext } from "../context/AppContext";
+import { colors } from "../theme/colors";
 
 const AccountScreen = () => {
   const {
@@ -30,9 +29,9 @@ const AccountScreen = () => {
     loadingAction,
   } = useAppContext();
 
-  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteEmail, setInviteEmail] = useState("");
   const [displayNameInput, setDisplayNameInput] = useState(
-    userProfile?.displayName || '',
+    userProfile?.displayName || "",
   );
 
   const isAdmin = useMemo(
@@ -44,7 +43,7 @@ const AccountScreen = () => {
     if (!inviteEmail.trim()) return;
     try {
       await inviteRoommateByEmail(inviteEmail.trim());
-      setInviteEmail('');
+      setInviteEmail("");
     } catch {
       // error handled in context toast/state
     }
@@ -66,22 +65,26 @@ const AccountScreen = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.profileCard}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>
-              {(userProfile?.displayName || userProfile?.email || '?')
+              {(userProfile?.displayName || userProfile?.email || "?")
                 .slice(0, 1)
                 .toUpperCase()}
             </Text>
           </View>
           <View style={styles.profileInfo}>
             <Text style={styles.profileName}>
-              {userProfile?.displayName || 'Roommate'}
+              {userProfile?.displayName || "Roommate"}
             </Text>
             <Text style={styles.profileEmail}>{userProfile?.email}</Text>
             <Text style={styles.profileHome}>
-              Home: {home?.name || 'Not assigned yet'}
+              Home: {home?.name || "Not assigned yet"}
             </Text>
           </View>
           {isAdmin && (
@@ -93,9 +96,9 @@ const AccountScreen = () => {
 
         <Text style={styles.sectionTitle}>Home</Text>
         <View style={styles.homeCard}>
-          <Text style={styles.homeName}>{home?.name || 'No home yet'}</Text>
+          <Text style={styles.homeName}>{home?.name || "No home yet"}</Text>
           <Text style={styles.homeMeta}>
-            {roommates.length} roommate{roommates.length === 1 ? '' : 's'}
+            {roommates.length} roommate{roommates.length === 1 ? "" : "s"}
           </Text>
           {home && (
             <TouchableOpacity
@@ -103,9 +106,7 @@ const AccountScreen = () => {
               onPress={handleLeaveHome}
               disabled={loadingAction}
             >
-              <Text style={styles.leaveButtonText}>
-                Leave home
-              </Text>
+              <Text style={styles.leaveButtonText}>Leave home</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -114,6 +115,8 @@ const AccountScreen = () => {
         <FlatList
           data={roommates}
           keyExtractor={(item) => item.id}
+          nestedScrollEnabled
+          style={styles.listSection}
           renderItem={({ item }) => (
             <View style={styles.roommateRow}>
               <RoommateCard
@@ -122,7 +125,7 @@ const AccountScreen = () => {
               />
               <View style={styles.roommateMeta}>
                 <Text style={styles.roleLabel}>
-                  {item.uid === home?.createdBy ? 'Admin' : 'Member'}
+                  {item.uid === home?.createdBy ? "Admin" : "Member"}
                 </Text>
                 {isAdmin && item.uid !== home?.createdBy && (
                   <TouchableOpacity
@@ -138,17 +141,19 @@ const AccountScreen = () => {
           ListEmptyComponent={
             <Text style={styles.emptyText}>No roommates yet.</Text>
           }
-          contentContainerStyle={{ paddingBottom: 8 }}
+          contentContainerStyle={styles.listContentCompact}
         />
 
         <Text style={styles.sectionTitle}>Pending invites</Text>
         <FlatList
           data={roommateInvites}
+          nestedScrollEnabled
+          style={styles.listSection}
           keyExtractor={(item, index) =>
-            typeof item === 'string' ? `${item}-${index}` : item.id
+            typeof item === "string" ? `${item}-${index}` : item.id
           }
           renderItem={({ item }) => {
-            const email = typeof item === 'string' ? item : item.email;
+            const email = typeof item === "string" ? item : item.email;
             return (
               <View style={styles.inviteRow}>
                 <View style={styles.inviteInfo}>
@@ -167,7 +172,7 @@ const AccountScreen = () => {
           ListEmptyComponent={
             <Text style={styles.emptyText}>No pending invites.</Text>
           }
-          contentContainerStyle={{ paddingBottom: 8 }}
+          contentContainerStyle={styles.listContentCompact}
         />
 
         <View style={styles.inviteCard}>
@@ -182,7 +187,10 @@ const AccountScreen = () => {
               value={inviteEmail}
               onChangeText={setInviteEmail}
             />
-            <TouchableOpacity style={styles.inviteButton} onPress={handleInvite}>
+            <TouchableOpacity
+              style={styles.inviteButton}
+              onPress={handleInvite}
+            >
               <Ionicons name="send-outline" size={18} color="#fff" />
             </TouchableOpacity>
           </View>
@@ -208,7 +216,10 @@ const AccountScreen = () => {
             </TouchableOpacity>
           </View>
           <TouchableOpacity
-            style={[styles.logoutButton, loadingAction && styles.logoutButtonDisabled]}
+            style={[
+              styles.logoutButton,
+              loadingAction && styles.logoutButtonDisabled,
+            ]}
             onPress={logout}
           >
             <Ionicons
@@ -220,7 +231,7 @@ const AccountScreen = () => {
             <Text style={styles.logoutButtonText}>Log out</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -232,17 +243,19 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+  },
+  contentContainer: {
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 16,
   },
   profileCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.surface,
     borderRadius: 24,
     padding: 18,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.08,
     shadowRadius: 20,
@@ -254,21 +267,21 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 14,
   },
   avatarText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 22,
-    fontWeight: '800',
+    fontWeight: "800",
   },
   profileInfo: {
     flex: 1,
   },
   profileName: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     color: colors.textPrimary,
   },
   profileEmail: {
@@ -289,12 +302,12 @@ const styles = StyleSheet.create({
   },
   rolePillText: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.primaryDark,
   },
   sectionTitle: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: "700",
     color: colors.textPrimary,
     marginBottom: 8,
     marginTop: 8,
@@ -307,7 +320,7 @@ const styles = StyleSheet.create({
   },
   homeName: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: "700",
     color: colors.textPrimary,
   },
   homeMeta: {
@@ -317,7 +330,7 @@ const styles = StyleSheet.create({
   },
   leaveButton: {
     marginTop: 8,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
@@ -327,11 +340,11 @@ const styles = StyleSheet.create({
   leaveButtonText: {
     fontSize: 12,
     color: colors.danger,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   roommateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 8,
   },
   roommateMeta: {
@@ -351,22 +364,28 @@ const styles = StyleSheet.create({
   removePillText: {
     fontSize: 11,
     color: colors.danger,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   emptyText: {
     fontSize: 12,
     color: colors.textMuted,
     marginBottom: 4,
   },
+  listSection: {
+    maxHeight: 220,
+  },
+  listContentCompact: {
+    paddingBottom: 8,
+  },
   inviteRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: 6,
   },
   inviteInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   inviteEmail: {
     fontSize: 13,
@@ -383,8 +402,8 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   inviteRowInput: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 4,
   },
   inviteInput: {
@@ -403,8 +422,8 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   settingsCard: {
     marginTop: 8,
@@ -418,8 +437,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   settingsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 10,
   },
   settingsInput: {
@@ -441,14 +460,14 @@ const styles = StyleSheet.create({
   },
   settingsButtonText: {
     fontSize: 12,
-    color: '#fff',
-    fontWeight: '600',
+    color: "#fff",
+    fontWeight: "600",
   },
   logoutButton: {
     marginTop: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 10,
     borderRadius: 14,
     backgroundColor: colors.primaryDark,
@@ -458,10 +477,9 @@ const styles = StyleSheet.create({
   },
   logoutButtonText: {
     fontSize: 14,
-    color: '#fff',
-    fontWeight: '600',
+    color: "#fff",
+    fontWeight: "600",
   },
 });
 
 export default AccountScreen;
-

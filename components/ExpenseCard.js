@@ -1,27 +1,35 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../theme/colors';
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { colors } from "../theme/colors";
 
 const categoryIcon = (category) => {
   switch (category) {
-    case 'rent':
-      return 'home-outline';
-    case 'groceries':
-      return 'basket-outline';
-    case 'utilities':
-      return 'flash-outline';
+    case "rent":
+      return "home-outline";
+    case "groceries":
+      return "basket-outline";
+    case "utilities":
+      return "flash-outline";
     default:
-      return 'pricetag-outline';
+      return "pricetag-outline";
   }
 };
 
-const ExpenseCard = ({ title, amount, category = 'other', paidBy, createdAt }) => {
+const ExpenseCard = ({
+  title,
+  amount,
+  category = "other",
+  paidBy,
+  createdAt,
+}) => {
   const icon = categoryIcon(category);
-  const payerLabel = paidBy?.displayName || paidBy?.email || 'Someone';
+  const payerLabel = paidBy?.displayName || paidBy?.email || "Someone";
   const dateLabel = createdAt
-    ? new Date(createdAt.seconds ? createdAt.seconds * 1000 : createdAt).toLocaleDateString()
-    : '';
+    ? new Date(
+        createdAt.seconds ? createdAt.seconds * 1000 : createdAt,
+      ).toLocaleDateString()
+    : "";
 
   return (
     <View style={styles.card}>
@@ -37,8 +45,8 @@ const ExpenseCard = ({ title, amount, category = 'other', paidBy, createdAt }) =
             </Text>
           </View>
         </View>
-        <View style={{ alignItems: 'flex-end' }}>
-          <Text style={styles.amount}>${Number(amount || 0).toFixed(2)}</Text>
+        <View style={{ alignItems: "flex-end" }}>
+          <Text style={styles.amount}>₹{Number(amount || 0).toFixed(2)}</Text>
           {dateLabel ? <Text style={styles.meta}>{dateLabel}</Text> : null}
         </View>
       </View>
@@ -53,33 +61,33 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 14,
     marginBottom: 10,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.06,
     shadowRadius: 12,
     elevation: 3,
   },
   row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   leftRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   iconWrapper: {
     width: 32,
     height: 32,
     borderRadius: 16,
     backgroundColor: colors.surfaceSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 10,
   },
   title: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.textPrimary,
   },
   meta: {
@@ -89,10 +97,9 @@ const styles = StyleSheet.create({
   },
   amount: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     color: colors.textPrimary,
   },
 });
 
 export default ExpenseCard;
-
